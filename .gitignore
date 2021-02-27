@@ -1,0 +1,24 @@
+# generally ignore anything, BUT ...
+*
+# any files including a dot
+!*.*
+# any subdictionaries
+!*/
+# ignore temporary MATLAB files
+*.m~
+# ignore python cache files cache
+*__pycache__/*
+*.cache*
+# ignore .mat files, except tutorial file
+*.mat
+# ignore utility folder for now
+*util/
+#!*util/1160_rest_EEG_Rlm_Fhl_rdSeg_Art_EC.mat
+# ignore any output images
+*.png
+# ignore any csf files
+*.csv
+# ignore Mac profile files
+.DS_Store
+# ignore any files ending with _
+._*
