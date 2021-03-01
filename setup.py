@@ -1,3 +1,4 @@
+import os
 from setuptools import setup, find_packages
 
 classifiers = [
@@ -13,9 +14,13 @@ classifiers = [
     'Topic :: Scientific/Engineering',
 ]
 
+# Get the current version number from inside the module
+with open(os.path.join('ebosc', 'version.py')) as version_file:
+    exec(version_file.read())
+
 setup(
-    name='eBOSC-py',
-    version='0.95-dev',
+    name='ebosc',
+    version=__version__,
     license='LGPL-3.0-or-later',
     description='extended Better Oscillation Detection, implemented in python3',
     maintainer = 'Julian Kosciessa',
@@ -31,8 +36,6 @@ setup(
     ],
     python_requires='>=3.6',
     install_requires=[
-        'numpy', 'scipy', 'pandas', 'statsmodels', 'matplotlib',
+        'numpy', 'scipy', 'pandas', 'statsmodels', 'matplotlib'
     ],
-    extras_require={
-    },
 )
