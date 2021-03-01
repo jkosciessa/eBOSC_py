@@ -16,6 +16,8 @@ A project wiki for eBOSC is available [here](https://github.com/jkosciessa/eBOSC
 
 Simulation scripts and data files regarding the 2020 NeuroImage paper can be found at https://github.com/jkosciessa/eBOSC_resources_NI2020.
 
+A MATLAB implementation can be found [here] (https://github.com/jkosciessa/eBOSC).
+
 ## Installation
 -------------
 
