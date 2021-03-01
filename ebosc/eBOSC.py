@@ -23,8 +23,13 @@ Copyright 2020 Julian Q. Kosciessa, Thomas H. Grandy, Douglas D. Garrett & Marku
 ---
 """
 
+import numpy.matlib
 import numpy as np
 # import matplotlib.pyplot as plt
+import statsmodels.api as sm
+from scipy.stats.distributions import chi2
+from ebosc.helpers import find_nearest_value
+from ebosc.BOSC import BOSC_tf
 
 def eBOSC_getThresholds(cfg_eBOSC, TFR, eBOSC):
     """This function estimates the static duration and power thresholds and
@@ -44,9 +49,6 @@ def eBOSC_getThresholds(cfg_eBOSC, TFR, eBOSC):
                pt | empirical power threshold
                dt | duration threshold
     """
-    
-    import statsmodels.api as sm
-    from scipy.stats.distributions import chi2
 
     # concatenate power estimates in time across trials of interest
     
@@ -191,9 +193,6 @@ def eBOSC_episode_postproc_fwhm(cfg_eBOSC, episodes, TFR):
     %           episodes_new | updated table of episodes
     %           detected_new | updated binary detected matrix
     """
-    
-    import numpy.matlib
-    from helpers import find_nearest_value
     
     print("Applying FWHM post-processing ...")
     
@@ -346,9 +345,6 @@ def eBOSC_episode_postproc_maxbias(cfg_eBOSC, episodes, TFR):
     % although more precisely, this amplitude does not represent a
     % bias per se.
     """
-    import numpy.matlib
-    from helpers import find_nearest_value
-    from BOSC import BOSC_tf
     
     print("Applying maxbias post-processing ...")
     
@@ -562,12 +558,7 @@ def eBOSC_episode_create(cfg_eBOSC,TFR,detected,eBOSC):
                      SNR: (cell) time-resolved signal-to-noise ratio: momentary amplitude/static background estimate at channel*frequency
                      SNRMean: mean signal-to-noise ratio
     """
-    from helpers import find_nearest_value
-    # from eBOSC import eBOSC_episode_sparsefreq
-    # from eBOSC import eBOSC_episode_postproc_fwhm
-    # from eBOSC import eBOSC_episode_postproc_maxbias
-    # from eBOSC import eBOSC_episode_rm_shoulder
-    
+
     # initialize dictionary to save results in
     episodesTable = {}
     episodesTable['RowID'] = []
