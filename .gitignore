@@ -9,10 +9,12 @@
 # ignore python cache files cache
 *__pycache__/*
 *.cache*
+*.egg-info
+.ipynb_checkpoints
 # ignore .mat files, except tutorial file
 *.mat
-# ignore utility folder for now
-*util/
+# ignore data folder for now
+*data/
 #!*util/1160_rest_EEG_Rlm_Fhl_rdSeg_Art_EC.mat
 # ignore any output images
 *.png
