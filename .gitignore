@@ -14,8 +14,8 @@
 .ipynb_checkpoints
 # ignore .mat files, except tutorial file
 *.mat
-# ignore data folder for now
-*data/
+# ignore example output (any numpy output for now)
+*.npy
 #!*util/1160_rest_EEG_Rlm_Fhl_rdSeg_Art_EC.mat
 # ignore any output images
 *.png
