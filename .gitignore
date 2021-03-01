@@ -12,6 +12,7 @@
 *.cache*
 *.egg-info
 .ipynb_checkpoints
+.vscode
 # ignore .mat files, except tutorial file
 *.mat
 # ignore example output (any numpy output for now)
