@@ -15,13 +15,14 @@
 .vscode
 # ignore .mat files, except tutorial file
 *.mat
+!*data/1160_rest_EEG_Rlm_Fhl_rdSeg_Art_EC.mat
 # ignore example output (any numpy output for now)
 *.npy
-#!*util/1160_rest_EEG_Rlm_Fhl_rdSeg_Art_EC.mat
 # ignore any output images
 *.png
 # ignore any csf files
 *.csv
+!*data/1160_rest_EEG_Rlm_Fhl_rdSeg_Art_EC.csv
 # ignore Mac profile files
 .DS_Store
 # ignore any files ending with _
