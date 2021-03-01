@@ -25,18 +25,16 @@ def eBOSC_wrapper(cfg_eBOSC, data):
     Outputs: 
         eBOSC | main eBOSC output dictionary containing the following entries:
             episodes | Dictionary: individual rhythmic episodes (see eBOSC_episode_create)
-            detected | DataFrame: binary detected time-frequency points (prior to episode creation)
-            pepisode | DataFrame: temporal average of detected rhythms (prior to episode creation)
-            detected_ep | DataFrame: binary detected time-frequency points (following episode creation)
-            abundance_ep | DataFrame: temporal average of detected rhythms (following episode creation)
+            detected | DataFrame: binary detected time-frequency points (prior to episode creation), pepisode = temporal average
+            detected_ep | DataFrame: binary detected time-frequency points (following episode creation), abundance = temporal average
             cfg | config structure (see input)
     """
 
     import pandas as pd
     import numpy as np
     # import matplotlib.pyplot as plt
-    from BOSC import BOSC_tf, BOSC_detect
-    from eBOSC import eBOSC_getThresholds, eBOSC_episode_create 
+    from ebosc.BOSC import BOSC_tf, BOSC_detect
+    from ebosc.eBOSC import eBOSC_getThresholds, eBOSC_episode_create 
     
     # %% get list of channel names (very manual solution, replace if possible)
 
@@ -87,7 +85,7 @@ def eBOSC_wrapper(cfg_eBOSC, data):
         
     # %% preallocate data frames
 
-    eBOSC = {};
+    eBOSC = {}
     eBOSC['static.bg_pow'] = pd.DataFrame(columns=cfg_eBOSC['F'])
     eBOSC['static.bg_log10_pow'] = pd.DataFrame(columns=cfg_eBOSC['F'])    
     eBOSC['static.pv'] = pd.DataFrame(columns=['slope', 'intercept'])
@@ -101,15 +99,8 @@ def eBOSC_wrapper(cfg_eBOSC, data):
     index=pd.MultiIndex.from_product(arrays,names=names)
     nullData=np.zeros(len(arrays[0]) * len(arrays[1]) * len(arrays[2]) * len(arrays[3]) )
     eBOSC['detected'] = pd.DataFrame(data=nullData, index=index)
-    eBOSC['detected_ep'] = pd.DataFrame(data=nullData, index=index)
+    eBOSC['detected_ep'] = eBOSC['detected'].copy()
     del nullData, index
-    
-    arrays = np.array([cfg_eBOSC['channel'],cfg_eBOSC['trial'],cfg_eBOSC['F']],dtype=object)
-    names=["channel", "trial", "frequency"]
-    index=pd.MultiIndex.from_product(arrays,names=names)
-    nullData=np.zeros(len(arrays[0]) * len(arrays[1]) * len(arrays[2]))
-    eBOSC['pepisode'] = pd.DataFrame(data=nullData, index=index)
-    eBOSC['abundance_ep'] = pd.DataFrame(data=nullData, index=index)
     
     eBOSC['episodes'] = {}
 
@@ -143,15 +134,7 @@ def eBOSC_wrapper(cfg_eBOSC, data):
                 
         # %% Step 2: robust background power fit (see 2020 NeuroImage paper)
        
-        if cfg_eBOSC['threshold.IRASA'] == 'yes':
-            # alternative background fit via IRASA (not implemented yet)
-            print('IRASA has not been implemented yet (= FieldTrip MATLAB code)')
-            print('Using non-IRASA default')
-            # [frac, cfg] = getAperiodicSpectrum_IRASA(data, cfg);
-            # [eBOSC, pt, dt] = eBOSC_getThresholds(cfg, TFR, eBOSC, frac); 
-            [eBOSC, pt, dt] = eBOSC_getThresholds(cfg_eBOSC, TFR, eBOSC)
-        else:
-            [eBOSC, pt, dt] = eBOSC_getThresholds(cfg_eBOSC, TFR, eBOSC)
+        [eBOSC, pt, dt] = eBOSC_getThresholds(cfg_eBOSC, TFR, eBOSC)
          
         # %% application of thresholds to single trials
 
@@ -175,14 +158,11 @@ def eBOSC_wrapper(cfg_eBOSC, data):
             # threshold to detect individual rhythmic segments in the continuous signals.
             detected = np.zeros((TFR_.shape))
             for f in range(len(cfg_eBOSC['F'])):
-                detected[f,:] = BOSC_detect(TFR_[f,:],pt[f],dt[f][0],cfg_eBOSC['fsample']);
+                detected[f,:] = BOSC_detect(TFR_[f,:],pt[f],dt[f][0],cfg_eBOSC['fsample'])
 
             # remove padding for detection (matrix with padding required for refinement)
             time2encode = np.arange(cfg_eBOSC['pad.detection_sample'], detected.shape[1]-cfg_eBOSC['pad.detection_sample'],1)
             eBOSC['detected'].loc[(channel, trial)] = np.reshape(detected[:,time2encode],[-1,1])
-
-            # encode pepisode of detected rhythms (optional)
-            eBOSC['pepisode'].loc[(channel, trial)] = eBOSC['detected'].loc[(channel, trial)].mean(level=['frequency']).values
             
             # %% Step 4 (optional): create table of separate rhythmic episodes
             [episodes, detected_ep] = eBOSC_episode_create(cfg_eBOSC,TFR_,detected,eBOSC)
@@ -193,24 +173,17 @@ def eBOSC_wrapper(cfg_eBOSC, data):
             time2encode = np.arange(cfg_eBOSC['pad.detection_sample'], detected_ep.shape[1]-cfg_eBOSC['pad.detection_sample'],1)
             eBOSC['detected_ep'].loc[(channel, trial)] = np.reshape(detected_ep[:,time2encode],[-1,1])
 
-            # encode abundance of eBOSC.episodes (optional)
-            eBOSC['abundance_ep'].loc[(channel, trial)] = eBOSC['detected_ep'].loc[(channel, trial)].mean(level=['frequency']).values
-
-            # Supplementary Plot: original eBOSC.detected vs. sparse episode power
-            detected_cur = eBOSC['detected_ep'].loc[(channel, trial)]
-            detected_cur = detected_cur.pivot_table(index=['frequency'], columns='time')
-            
-# =============================================================================
-#             fig, axes = plt.subplots(nrows=2, ncols=1)
-#             detected_cur = eBOSC['detected_ep'].loc[(channel, trial)]
-#             detected_cur = detected_cur.pivot_table(index=['frequency'], columns='time')
-#             curPlot = detected_cur*TFR_[:,time2encode]
-#             axes[0].imshow(curPlot, aspect='auto')
-#             detected_cur = eBOSC['detected'].loc[(channel, trial)]
-#             detected_cur = detected_cur.pivot_table(index=['frequency'], columns='time')
-#             curPlot = detected_cur*TFR_[:,time2encode]
-#             axes[1].imshow(curPlot, aspect='auto')
-# =============================================================================
+            # %% Supplementary Plot: original eBOSC.detected vs. sparse episode power
+            # import matplotlib.pyplot as plt
+            # fig, axes = plt.subplots(nrows=2, ncols=1)
+            # detected_cur = eBOSC['detected_ep'].loc[(channel, trial)]
+            # detected_cur = detected_cur.pivot_table(index=['frequency'], columns='time')
+            # curPlot = detected_cur*TFR_[:,time2encode]
+            # axes[0].imshow(curPlot, aspect='auto', vmin = 0, vmax = 1)
+            # detected_cur = eBOSC['detected'].loc[(channel, trial)]
+            # detected_cur = detected_cur.pivot_table(index=['frequency'], columns='time')
+            # curPlot = detected_cur*TFR_[:,time2encode]
+            # axes[1].imshow(curPlot, aspect='auto', vmin = 0, vmax = 1)
 
     # %% return dictionaries back to caller script
     return eBOSC, cfg_eBOSC
