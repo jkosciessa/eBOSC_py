@@ -2,6 +2,8 @@
 *
 # any files including a dot
 !*.*
+# license file
+!LICENSE
 # any subdictionaries
 !*/
 # ignore temporary MATLAB files
