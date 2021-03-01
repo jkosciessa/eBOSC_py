@@ -6,24 +6,17 @@ This script serves as a wrapper for the empirical eBOSC example.
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-#import os
+import os
+from ebosc.helpers import get_project_root
+from ebosc.eBOSC_wrapper import eBOSC_wrapper
 
 # %% specify paths
 
 # initialize empty dictionary for paths
 pn = dict()
-# automatically get script location from editor handle
-#pn['root']  = os.path.dirname(os.path.abspath(__file__)) + '/'
-pn['root']  =  '/Users/kosciessa/OneDrive/Dev/eBOSCRepos/eBOSC_py/'
-pn['internal'] =  pn['root'] + 'internal'
-pn['BOSC'] =  pn['root'] + 'external/BOSC'
-pn['dev'] =  pn['root'] + 'dev'
-pn['fieldtrip'] =  pn['root'] + 'external/fieldtrip'
-
-import sys
-sys.path.append(pn['internal'])
-sys.path.append(pn['BOSC'])
-sys.path.append(pn['dev'])
+pn['root']  = os.path.abspath(os.path.dirname(get_project_root()))
+pn['examplefile'] = os.path.join(pn['root'],'data','1160_rest_EEG_Rlm_Fhl_rdSeg_Art_EC.csv')
+pn['outfile'] = os.path.join(pn['root'],'data','example_out.npy')
 
 # %% eBOSC parameters
 
@@ -31,7 +24,7 @@ cfg_eBOSC = dict()
 cfg_eBOSC['F'] = 2 ** np.arange(1,6,.125)   # frequency sampling
 cfg_eBOSC['wavenumber'] = 6                 # wavelet parameter (time-frequency tradeoff)
 cfg_eBOSC['fsample'] = 500                  # current sampling frequency of EEG data
-cfg_eBOSC['pad.tfr_s'] = .5                 # padding following wavelet transform to avoid edge artifacts in seconds (bi-lateral)
+cfg_eBOSC['pad.tfr_s'] = 1                  # padding following wavelet transform to avoid edge artifacts in seconds (bi-lateral)
 cfg_eBOSC['pad.detection_s'] = .5           # padding following rhythm detection in seconds (bi-lateral); 'shoulder' for BOSC eBOSC.detected matrix to account for duration threshold
 cfg_eBOSC['pad.background_s'] = 1           # padding of segments for BG (only avoiding edge artifacts)
 
@@ -39,7 +32,6 @@ cfg_eBOSC['pad.background_s'] = 1           # padding of segments for BG (only a
 cfg_eBOSC['threshold.excludePeak'] = np.array([[8,15]])   # lower and upper bound of frequencies to be excluded during background fit (Hz) (previously: LowFreqExcludeBG HighFreqExcludeBG)
 cfg_eBOSC['threshold.duration'] = np.kron(np.ones((1,len(cfg_eBOSC['F']))),3) # vector of duration thresholds at each frequency (previously: ncyc)
 cfg_eBOSC['threshold.percentile'] = .95    # percentile of background fit for power threshold
-cfg_eBOSC['threshold.IRASA'] = 'no'        # use IRASA (experimental)
 
 # episode post-processing
 cfg_eBOSC['postproc.use'] = 'yes'           # Post-processing of rhythmic eBOSC.episodes, i.e., wavelet 'deconvolution' (default = 'no')
@@ -52,71 +44,16 @@ cfg_eBOSC['channel'] = ['Oz']           # select posterior channels (default: al
 cfg_eBOSC['trial'] = []                  # select trials (default: all, indicate in natural trial number (not zero-starting))
 cfg_eBOSC['trial_background'] = []       # select trials for background (default: all, indicate in natural trial number (not zero-starting))
 
-# %% load data
+# %% load example data (see /data folder)
 
-# read in evoked structure in native .fif format to get the MNE info class
-from mne import read_evokeds
-evoked = read_evokeds(pn['root'] + 'util/1160_rest_EEG_Rlm_Fhl_rdSeg_Art_EC.fif')
-
-# import the .mat data, this does not respect variations in timing across epochs
-from fieldtrip2mne import read_epoched
-dataMNE = read_epoched(fname=pn['root'] + 'util/1160_rest_EEG_Rlm_Fhl_rdSeg_Art_EC.mat', info=evoked[0].info, data_name='data',trialinfo_column=0)
-
-# the following code is the native MNE implementation of the above, but breaks with across-epoch time variability
-#from mne import read_epochs_fieldtrip
-#dataMNE = read_epochs_fieldtrip(fname=pn['root'] + 'util/1160_rest_EEG_Rlm_Fhl_rdSeg_Art_EC.mat', info=evoked[0].info, data_name='data',trialinfo_column=0)
-
-# retrieve data from MNE structure into pandas data frame
-data = dataMNE.to_data_frame(time_format=None, scalings=dict(eeg=1, mag=1, grad=1))
-
-# %% plot data by time (note that all trials falsely share the same epoch time
-
-# curEpoch = data[data['epoch']==0]
-# curEpoch.plot(x ='time', y='Fp1', kind = 'line')
-# plt.show()
-
-# %% correct the timing to have separate timings for each epoch
-
-from helpers import getTimeFromFTmat
-
-fname = pn['root'] + 'util/1160_rest_EEG_Rlm_Fhl_rdSeg_Art_EC.mat'
-original_time = getTimeFromFTmat(fname, var_name='data')
-
-# replace data in dataframe with correct timings
-n_trials = len(pd.unique(data['epoch'])) 
-for trial in range(n_trials):
-    data.loc[data['epoch']==trial, ('time')] = original_time[trial, :]
-
-# %% plot data from all 'trials' (now correct continuous time)
-
-# data.plot(x ='time', y='Fp1', kind = 'line')
-# plt.show()
-
-# %% plot heatmap of time-trials
-
-# n_trials = len(pd.unique(data['epoch'])) 
-# n_time = len(pd.unique(data.loc[data['epoch']==0, ('time')]))
-# plot_data = np.zeros((n_trials, n_time))
-# for trial in range(n_trials):
-#     plot_data[trial, :] = data.loc[data['epoch']==trial, ('Oz')]
-
-# plt.imshow(plot_data, extent=[0, 1, 0, 1])
+data = pd.read_csv(pn['examplefile'])
 
 # %% concatenate trials for resting state here (pseudo-continuous)
-
 # more specifically, treat as single trial
+
 data['epoch'].values[:] = 0
 
-# %% remove channels that are not needed
-
-del data['A1']
-del data['IOR']
-del data['LHEOG']
-del data['RHEOG']
-
 # %% run eBOSC
-
-from eBOSC_wrapper import eBOSC_wrapper
 
 [eBOSC, cfg] = eBOSC_wrapper(cfg_eBOSC, data)
 
@@ -176,6 +113,7 @@ plt.xlabel('Frequency (log10 Hz)')
 plt.ylabel('Power (log 10 a.u.)')
 ax.legend()
 ax.set_xlim([.3, 1.75])
+plt.show()
 
 # %% Supplementary Plots: different episode statistics
 fig, ax = plt.subplots(nrows=3, ncols=2,figsize=(10,12))
@@ -192,8 +130,8 @@ ax[2,0].set_title('Frequency distribution')
 tmp_pep = eBOSC['detected'].mean(level=['frequency']).values
 [pep]=ax[2,1].plot(tmp_pep)
 pep.set_label('Pepisode')
-tmp_pep = eBOSC['detected_ep'].mean(level=['frequency']).values
-[abn]=ax[2,1].plot(tmp_pep)
+tmp_abn = eBOSC['detected_ep'].mean(level=['frequency']).values
+[abn]=ax[2,1].plot(tmp_abn)
 abn.set_label('Abundance')
 ax[2,1].set_title('Pepisode')
 ax[2,1].set_xlim([0, 39])
@@ -205,6 +143,7 @@ x_label_list = np.round(cur_freq[np.int_(xticks_loc)],1).tolist()
 ax[2,1].set_xticks(xticks_loc)
 ax[2,1].set_xticklabels(x_label_list)
 ax[2,1].legend()
+plt.show()
 
 # %% Supplementary Plot: plot rhythmic episodes with indicated onsets
 
@@ -241,8 +180,8 @@ rhythm.set_label('Rhythmic signal')
 plt.xlabel('Time (s)')
 plt.ylabel('Power [µV]')
 ax.legend()
-ax.set_xlim([7.2, 7.8])
-#ax.set_xlim([cfg_eBOSC['time.time_det'][0], cfg_eBOSC['time.time_det'][-1]])
+ax.set_xlim([4, 12])
+plt.show()
 
 # =============================================================================
 # # Plot the same based on eBOSC's detected matrix:
@@ -279,3 +218,10 @@ eBOSC['episodes']['ColID'] = []
 
 # Additionally, it makes sense to save the cfg for later reference.
 eBOSC['cfg'] = cfg_eBOSC
+
+# %% save output dictionary
+
+np.save(pn['outfile'], eBOSC)
+
+# %% load existing output file as 
+# eBOSC = np.load(pn['outfile'],allow_pickle='TRUE').item()
