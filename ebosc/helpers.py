@@ -3,6 +3,7 @@
 
 import numpy as np
 import scipy.io as sio
+from pathlib import Path
 
 def find_nearest_value(array, value):
     """Find nearest value and index of float in array
@@ -32,5 +33,9 @@ def getTimeFromFTmat(fname, var_name='data'):
     time = np.zeros((n_trial, n_time))
     for trial in range(n_trial):
         # data[trial, :, :] = ft_data.trial[trial]
-        time[trial, :] = ft_data.time[trial]
+        # Note that this indexes time_orig in the adapted structure
+        time[trial, :] = ft_data.time_orig[trial]
     return time
+
+def get_project_root() -> Path:
+    return Path(__file__).parent
