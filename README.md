@@ -19,9 +19,14 @@ Simulation scripts and data files regarding the 2020 NeuroImage paper can be fou
 ## Installation
 -------------
 
-After downloading, simply add the toolbox path. The toolbox requires a version of MATLAB and has been tested with R2017b.
+Get the latest development version using git:
+git clone https://github.com/jkosciessa/eBOSC_py
 
-Note: If you use the 'Download ZIP' button to retrieve the repository, the .mat example file may not be downloaded due to a problem in GitHub's lfs implementation. Using 'git clone' to copy the repository should work to retrieve the file.
+To install this cloned copy, move into the cloned directory and run:
+pip install .
+
+You can also install an editable development version by installing with:
+pip install -e .
 
 ## Credits
 -------------

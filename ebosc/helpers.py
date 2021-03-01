@@ -1,15 +1,18 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+""" Various helper functions
 """
-Various helper functions
 
-Created on Fri Feb 19 11:07:23 2021
-
-@author: kosciessa
-"""
+import numpy as np
+import scipy.io as sio
 
 def find_nearest_value(array, value):
-    import numpy as np
+    """Find nearest value and index of float in array
+    Parameters:
+    array : Array of values [1d array]
+    value : Value of interest [float]
+    Returns:
+    array[idx] : Nearest value [1d float]
+    idx : Nearest index [1d float]
+    """
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return array[idx], idx
@@ -19,8 +22,6 @@ def getTimeFromFTmat(fname, var_name='data'):
     Get original timing from FieldTrip structure
     Solution based on https://github.com/mne-tools/mne-python/issues/2476
     """
-    import scipy.io as sio
-    import numpy as np
     # load Matlab/Fieldtrip data
     mat = sio.loadmat(fname, squeeze_me=True, struct_as_record=False)
     ft_data = mat[var_name]

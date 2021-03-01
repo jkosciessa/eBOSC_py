@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 eBOSC (extended Better Oscillation Detection) function library
 Rewritten from MATLAB to Python by Julian Q. Kosciessa
@@ -25,6 +23,9 @@ Copyright 2020 Julian Q. Kosciessa, Thomas H. Grandy, Douglas D. Garrett & Marku
 ---
 """
 
+import numpy as np
+# import matplotlib.pyplot as plt
+
 def eBOSC_getThresholds(cfg_eBOSC, TFR, eBOSC):
     """This function estimates the static duration and power thresholds and
     saves information regarding the overall spectrum and background.
@@ -44,7 +45,8 @@ def eBOSC_getThresholds(cfg_eBOSC, TFR, eBOSC):
                dt | duration threshold
     """
     
-    import numpy as np
+    import statsmodels.api as sm
+    from scipy.stats.distributions import chi2
 
     # concatenate power estimates in time across trials of interest
     
@@ -56,9 +58,7 @@ def eBOSC_getThresholds(cfg_eBOSC, TFR, eBOSC):
     # concatenate trials in time dimension: permute dimensions, then reshape
     TFR_t = np.transpose(TFR, [1,2,0])
     BG = TFR_t.reshape(TFR_t.shape[0],TFR_t.shape[1]*TFR_t.shape[2])
-    del TFR_t, trial2extract, time2extract
-    
-    # import matplotlib.pyplot as plt
+    del TFR_t, trial2extract, time2extract    
     # plt.imshow(BG[:,0:100], extent=[0, 1, 0, 1])
     
     # if frequency ranges should be exluded to reduce the influence of
@@ -77,14 +77,14 @@ def eBOSC_getThresholds(cfg_eBOSC, TFR, eBOSC):
             freqInd2 = np.where(cfg_eBOSC['F'] <= cfg_eBOSC['threshold.excludePeak'][indExFreq,1])[-1][-1]
             meanbg_within_range = list(BG[freqInd1:freqInd2,:].mean(1))
             indPos = meanbg_within_range.index(max(meanbg_within_range))
-            indPos = freqInd1+indPos;
+            indPos = freqInd1+indPos
             # approximate wavelet extension in frequency domain
             # note: we do not remove the specified range, but the FWHM
             # around the empirical peak
-            LowFreq = cfg_eBOSC['F'][indPos]-(((2/cfg_eBOSC['wavenumber'])*cfg_eBOSC['F'][indPos])/2);
-            UpFreq = cfg_eBOSC['F'][indPos]+(((2/cfg_eBOSC['wavenumber'])*cfg_eBOSC['F'][indPos])/2);
+            LowFreq = cfg_eBOSC['F'][indPos]-(((2/cfg_eBOSC['wavenumber'])*cfg_eBOSC['F'][indPos])/2)
+            UpFreq = cfg_eBOSC['F'][indPos]+(((2/cfg_eBOSC['wavenumber'])*cfg_eBOSC['F'][indPos])/2)
             # index power estimates within the above range to remove from BG fit
-            freqKeep[np.logical_and(cfg_eBOSC['F'] >= LowFreq, cfg_eBOSC['F'] <= UpFreq)] = False;
+            freqKeep[np.logical_and(cfg_eBOSC['F'] >= LowFreq, cfg_eBOSC['F'] <= UpFreq)] = False
 
     fitInput = {}
     fitInput['f_'] = cfg_eBOSC['F'][freqKeep]
@@ -93,9 +93,6 @@ def eBOSC_getThresholds(cfg_eBOSC, TFR, eBOSC):
     dataForBG = np.log10(fitInput['BG_']).mean(1)
     
     # perform the robust linear fit, only including putatively aperiodic components (i.e., peak exclusion)
-    
-    import statsmodels.api as sm
-    
     # replicate TukeyBiweight from MATLABs robustfit function
     exog = np.log10(fitInput['f_'])
     exog = sm.add_constant(exog)
@@ -106,12 +103,11 @@ def eBOSC_getThresholds(cfg_eBOSC, TFR, eBOSC):
     pv = np.zeros(2)
     pv[0] = rlm_results.params[1]
     pv[1] = rlm_results.params[0]
-    mp = 10**(np.polyval(pv,np.log10(cfg_eBOSC['F']))); 
+    mp = 10**(np.polyval(pv,np.log10(cfg_eBOSC['F'])))
 
     # compute eBOSC power (pt) and duration (dt) thresholds: 
     # power threshold is based on a chi-square distribution with df=2 and mean as estimated above
-    from scipy.stats.distributions import chi2
-    pt=chi2.ppf(cfg_eBOSC['threshold.percentile'],2)*mp/2;
+    pt=chi2.ppf(cfg_eBOSC['threshold.percentile'],2)*mp/2
     # duration threshold is the specified number of cycles, so it scales with frequency
     dt=(cfg_eBOSC['threshold.duration']*cfg_eBOSC['fsample']/cfg_eBOSC['F'])
     dt=np.transpose(dt, [1,0])
@@ -124,19 +120,17 @@ def eBOSC_getThresholds(cfg_eBOSC, TFR, eBOSC):
     # log10-transformed wavelet power spectrum (NOT only background)
     eBOSC['static.bg_log10_pow'].loc[cfg_eBOSC['tmp_channel'],:] = np.log10(BG[:,time2encode]).mean(1)
     # intercept and slope parameters of the robust linear 1/f fit (log-log)
-    eBOSC['static.pv'].loc[cfg_eBOSC['tmp_channel'],:] = pv;
+    eBOSC['static.pv'].loc[cfg_eBOSC['tmp_channel'],:] = pv
     # linear background power at each estimated frequency
-    eBOSC['static.mp'].loc[cfg_eBOSC['tmp_channel'],:] = mp;
+    eBOSC['static.mp'].loc[cfg_eBOSC['tmp_channel'],:] = mp
     # statistical power threshold
-    eBOSC['static.pt'].loc[cfg_eBOSC['tmp_channel'],:] = pt;
+    eBOSC['static.pt'].loc[cfg_eBOSC['tmp_channel'],:] = pt
 
     return eBOSC, pt, dt
 
 def eBOSC_episode_sparsefreq(cfg_eBOSC, detected, TFR):
     """Sparsen the detected matrix along the frequency dimension
-    """
-    import numpy as np
-    
+    """    
     print('Creating sparse detected matrix ...')
     
     freqWidth = (2/cfg_eBOSC['wavenumber'])*cfg_eBOSC['F']
@@ -198,7 +192,6 @@ def eBOSC_episode_postproc_fwhm(cfg_eBOSC, episodes, TFR):
     %           detected_new | updated binary detected matrix
     """
     
-    import numpy as np
     import numpy.matlib
     from helpers import find_nearest_value
     
@@ -353,7 +346,6 @@ def eBOSC_episode_postproc_maxbias(cfg_eBOSC, episodes, TFR):
     % although more precisely, this amplitude does not represent a
     % bias per se.
     """
-    import numpy as np
     import numpy.matlib
     from helpers import find_nearest_value
     from BOSC import BOSC_tf
@@ -391,7 +383,6 @@ def eBOSC_episode_postproc_maxbias(cfg_eBOSC, episodes, TFR):
         B_bias[f,:,points_end] = np.transpose(np.fliplr(tmp_bias_mat[:,points_begin]))
         # maximum amplitude
         amp_max[f,:] = B_bias[f,:,:].max(1)
-        # import matplotlib.pyplot as plt
         # plt.imshow(amp_max, extent=[0, 1, 0, 1])
 
     # midpoint index
@@ -486,7 +477,6 @@ def eBOSC_episode_rm_shoulder(cfg_eBOSC,detected1,episodes):
     as the point of the padding of the detected matrix is exactly to account
     for allowing the presence of a few cycles.
     """
-    import numpy as np
 
     print("Removing padding from detected episodes")
 
@@ -572,7 +562,6 @@ def eBOSC_episode_create(cfg_eBOSC,TFR,detected,eBOSC):
                      SNR: (cell) time-resolved signal-to-noise ratio: momentary amplitude/static background estimate at channel*frequency
                      SNRMean: mean signal-to-noise ratio
     """
-    import numpy as np
     from helpers import find_nearest_value
     # from eBOSC import eBOSC_episode_sparsefreq
     # from eBOSC import eBOSC_episode_postproc_fwhm
@@ -700,7 +689,6 @@ def eBOSC_episode_create(cfg_eBOSC,TFR,detected,eBOSC):
             detected_remaining[x,y] = 0
         
         # some sanity checks that episode selection was sensible
-        #import matplotlib.pyplot as plt
         #plt.imshow(detected, extent=[0, 1, 0, 1])
         #plt.imshow(detected_new, extent=[0, 1, 0, 1])
     

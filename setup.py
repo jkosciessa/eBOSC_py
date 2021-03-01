@@ -18,10 +18,6 @@ setup(
     version='0.0.1',
     license='LGPL-3.0-or-later',
     description='extended Better Oscillation Detection, implemented in python3',
-    long_description='%s\n%s' % (
-        re.compile('^.. start-badges.*^.. end-badges', re.M | re.S).sub('', read('README.rst')),
-        re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))
-    ),
     maintainer = 'Julian Kosciessa',
     maintainer_email = 'kosciessa@mpib-berlin.mpg.de',
     url='https://github.com/jkosciessa/eBOSC_py/',
@@ -39,11 +35,8 @@ setup(
     ],
     python_requires='>=3.6',
     install_requires=[
-        # eg: 'aspectlib==1.1.1', 'six>=1.7',
+        'numpy', 'scipy', 'pandas', 'statsmodels', 'matplotlib',
     ],
     extras_require={
-        # eg:
-        #   'rst': ['docutils>=0.11'],
-        #   ':python_version=="2.6"': ['argparse'],
     },
 )

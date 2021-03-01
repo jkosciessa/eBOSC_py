@@ -1,43 +1,42 @@
-# -*- coding: utf-8 -*-
-
 def eBOSC_wrapper(cfg_eBOSC, data):
     """Main eBOSC wrapper function. Executes eBOSC subfunctions.
     Inputs: 
-              cfg | config structure with cfg.eBOSC field:
-                        cfg.eBOSC.F                     | frequency sampling
-                        cfg.eBOSC.wavenumber            | wavelet family parameter (time-frequency tradeoff)
-                        cfg.eBOSC.fsample               | current sampling frequency of EEG data
-                        cfg.eBOSC.pad.tfr_s             | padding following wavelet transform to avoid edge artifacts in seconds (bi-lateral)
-                        cfg.eBOSC.pad.detection_s       | padding following rhythm detection in seconds (bi-lateral); 'shoulder' for BOSC eBOSC.detected matrix to account for duration threshold
-                        cfg.eBOSC.pad.total_s           | complete padding (WL + shoulder)
-                        cfg.eBOSC.pad.background_s      | padding of segments for BG (only avoiding edge artifacts)
-                        cfg.eBOSC.threshold.excludePeak | lower and upper bound of frequencies to be excluded during background fit (Hz) (previously: LowFreqExcludeBG HighFreqExcludeBG)
-                        cfg.eBOSC.threshold.duration    | vector of duration thresholds at each frequency (previously: ncyc)
-                        cfg.eBOSC.threshold.percentile  | percentile of background fit for power threshold
-                        cfg.eBOSC.postproc.use          | Post-processing of rhythmic eBOSC.episodes, i.e., wavelet 'deconvolution' (default = 'no')
-                        cfg.eBOSC.postproc.method       | Deconvolution method (default = 'MaxBias', FWHM: 'FWHM')
-                        cfg.eBOSC.postproc.edgeOnly     | Deconvolution only at on- and offsets of eBOSC.episodes? (default = 'yes')
-                        cfg.eBOSC.postproc.effSignal	 | Power deconvolution on whole signal or signal above power threshold? (default = 'PT')
-                        cfg.eBOSC.channel               | Subset of channels? (default: [] = all)
-                        cfg.eBOSC.trial                 | Subset of trials? (default: [] = all)
-                        cfg.eBOSC.trial_background      | Subset of trials for background? (default: [] = all)
-              data | input time series data in FieldTrip format with:
-                   | .trial field: {trial}(channel x time)
-                   | .time field: {trial}(channel x time)
-                   | .label field: {channelName}
-
+        cfg_eBOSC | dictionary containing the following entries:
+            F                     | frequency sampling
+            wavenumber            | wavelet family parameter (time-frequency tradeoff)
+            fsample               | current sampling frequency of EEG data
+            pad.tfr_s             | padding following wavelet transform to avoid edge artifacts in seconds (bi-lateral)
+            pad.detection_s       | padding following rhythm detection in seconds (bi-lateral); 'shoulder' for BOSC eBOSC.detected matrix to account for duration threshold
+            pad.total_s           | complete padding (WL + shoulder)
+            pad.background_s      | padding of segments for BG (only avoiding edge artifacts)
+            threshold.excludePeak | lower and upper bound of frequencies to be excluded during background fit (Hz) (previously: LowFreqExcludeBG HighFreqExcludeBG)
+            threshold.duration    | vector of duration thresholds at each frequency (previously: ncyc)
+            threshold.percentile  | percentile of background fit for power threshold
+            postproc.use          | Post-processing of rhythmic eBOSC.episodes, i.e., wavelet 'deconvolution' (default = 'no')
+            postproc.method       | Deconvolution method (default = 'MaxBias', FWHM: 'FWHM')
+            postproc.edgeOnly     | Deconvolution only at on- and offsets of eBOSC.episodes? (default = 'yes')
+            postproc.effSignal	  | Power deconvolution on whole signal or signal above power threshold? (default = 'PT')
+            channel               | Subset of channels? (default: [] = all)
+            trial                 | Subset of trials? (default: [] = all)
+            trial_background      | Subset of trials for background? (default: [] = all)
+        data | input time series data as a Pandas DataFrame: 
+            - channels as columns
+            - multiindex containing: 'time', 'epoch', 
     Outputs: 
-              eBOSC | main eBOSC output structure
-                  eBOSC.episodes | table of individual rhythmic episodes (see eBOSC_episode_create)
-                  eBOSC.detected | binary matrix of detected time-frequency points (prior to episode creation)
-                  eBOSC.pepisode | temporal average of detected rhythms (prior to episode creation)
-                  eBOSC.detected_ep | binary matrix of detected time-frequency points (following episode creation)
-                  eBOSC.abundance_ep | temporal average of detected rhythms (following episode creation)
-              cfg | config structure
+        eBOSC | main eBOSC output dictionary containing the following entries:
+            episodes | Dictionary: individual rhythmic episodes (see eBOSC_episode_create)
+            detected | DataFrame: binary detected time-frequency points (prior to episode creation)
+            pepisode | DataFrame: temporal average of detected rhythms (prior to episode creation)
+            detected_ep | DataFrame: binary detected time-frequency points (following episode creation)
+            abundance_ep | DataFrame: temporal average of detected rhythms (following episode creation)
+            cfg | config structure (see input)
     """
 
     import pandas as pd
     import numpy as np
+    # import matplotlib.pyplot as plt
+    from BOSC import BOSC_tf, BOSC_detect
+    from eBOSC import eBOSC_getThresholds, eBOSC_episode_create 
     
     # %% get list of channel names (very manual solution, replace if possible)
 
@@ -122,9 +121,6 @@ def eBOSC_wrapper(cfg_eBOSC, data):
         cfg_eBOSC['tmp_channel'] = channel
                 
         # %% Step 1: time-frequency wavelet decomposition for whole signal to prepare background fit
-
-        from BOSC import BOSC_tf 
-
         n_trial = len(cfg_eBOSC['trial'])
         n_freq = len(cfg_eBOSC['F'])
         n_time = len(pd.unique(data.loc[data['epoch']==0, ('time')]))
@@ -140,16 +136,12 @@ def eBOSC_wrapper(cfg_eBOSC, data):
             
         # %% plot example time-frequency spectrograms (only for intuition/debugging) 
         # assumes that multiple trials are present
-        
-        # import matplotlib.pyplot as plt
         # plt.imshow(TFR[0,:,:], extent=[0, 1, 0, 1])
         # plt.imshow(TFR[:,:,:].mean(axis=0), extent=[0, 1, 0, 1])
         # plt.imshow(TFR[:,:,:].mean(axis=1), extent=[0, 1, 0, 1])
         # plt.imshow(TFR[:,:,:].mean(axis=2), extent=[0, 1, 0, 1])
                 
         # %% Step 2: robust background power fit (see 2020 NeuroImage paper)
-       
-        from eBOSC import eBOSC_getThresholds  
        
         if cfg_eBOSC['threshold.IRASA'] == 'yes':
             # alternative background fit via IRASA (not implemented yet)
@@ -179,8 +171,6 @@ def eBOSC_wrapper(cfg_eBOSC, data):
             TFR_ = np.transpose(TFR[trial,:,time2extract],[1,0])
             
             # %% Step 3: detect rhythms and calculate Pepisode
-
-            from BOSC import BOSC_detect
             # The next section applies both the power and the duration
             # threshold to detect individual rhythmic segments in the continuous signals.
             detected = np.zeros((TFR_.shape))
@@ -195,8 +185,6 @@ def eBOSC_wrapper(cfg_eBOSC, data):
             eBOSC['pepisode'].loc[(channel, trial)] = eBOSC['detected'].loc[(channel, trial)].mean(level=['frequency']).values
             
             # %% Step 4 (optional): create table of separate rhythmic episodes
-
-            from eBOSC import eBOSC_episode_create
             [episodes, detected_ep] = eBOSC_episode_create(cfg_eBOSC,TFR_,detected,eBOSC)
             # insert detected episodes into episode structure
             eBOSC['episodes'] = episodes
