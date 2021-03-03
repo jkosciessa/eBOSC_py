@@ -72,15 +72,17 @@ def eBOSC_wrapper(cfg_eBOSC, data):
     n_trial = len(cfg_eBOSC['trial'])
     n_freq = len(cfg_eBOSC['F'])
     n_time_total = len(pd.unique(data.loc[data['epoch']==0, ('time')]))
-    # create a new time vector that is non-continuous and starts at zero
-    cfg_eBOSC['time.time_total'] = np.arange(0, 1/cfg_eBOSC['fsample']*(n_time_total) , 1/cfg_eBOSC['fsample'])
+    # copy potentially non-continuous time values (assume that epoch is labeled 0)
+    cfg_eBOSC['time.time_total'] = data.loc[data['epoch']==0, ('time')].values
+    # alternatively: create a new time vector that is non-continuous and starts at zero
+    # np.arange(0, 1/cfg_eBOSC['fsample']*(n_time_total) , 1/cfg_eBOSC['fsample'])
     # get timing and info for post-TFR padding removal
     tfr_time2extract = np.arange(cfg_eBOSC['pad.tfr_sample']+1, n_time_total-cfg_eBOSC['pad.tfr_sample']+1,1)
     cfg_eBOSC['time.time_tfr'] = cfg_eBOSC['time.time_total'][tfr_time2extract]
     n_time_tfr = len(cfg_eBOSC['time.time_tfr'])
     # get timing and info for post-detected padding removal
     det_time2extract = np.arange(cfg_eBOSC['pad.detection_sample']+1, n_time_tfr-cfg_eBOSC['pad.detection_sample']+1,1)
-    cfg_eBOSC['time.time_det'] = cfg_eBOSC['time.time_total'][det_time2extract]
+    cfg_eBOSC['time.time_det'] = cfg_eBOSC['time.time_tfr'][det_time2extract]
     n_time_det = len(cfg_eBOSC['time.time_det'])
         
     # %% preallocate data frames

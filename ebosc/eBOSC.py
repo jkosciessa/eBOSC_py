@@ -77,9 +77,10 @@ def eBOSC_getThresholds(cfg_eBOSC, TFR, eBOSC):
             # find empirical peak in specified range
             freqInd1 = np.where(cfg_eBOSC['F'] >= cfg_eBOSC['threshold.excludePeak'][indExFreq,0])[0][0]
             freqInd2 = np.where(cfg_eBOSC['F'] <= cfg_eBOSC['threshold.excludePeak'][indExFreq,1])[-1][-1]
-            meanbg_within_range = list(BG[freqInd1:freqInd2,:].mean(1))
+            freqidx = np.arange(freqInd1,freqInd2+1)
+            meanbg_within_range = list(BG[freqidx,:].mean(1))
             indPos = meanbg_within_range.index(max(meanbg_within_range))
-            indPos = freqInd1+indPos
+            indPos = freqidx[indPos]
             # approximate wavelet extension in frequency domain
             # note: we do not remove the specified range, but the FWHM
             # around the empirical peak
@@ -143,19 +144,19 @@ def eBOSC_episode_sparsefreq(cfg_eBOSC, detected, TFR):
     for [indF,valF] in enumerate(cfg_eBOSC['F']):
         #print(indF)
         lastVal = np.where(cfg_eBOSC['F']<=lowFreq[indF])[0]
-        if not not any(lastVal):
+        if len(lastVal)>0:
             # first freq falling into range
             fmat[indF,0] = lastVal[-1]+1
-        else: fmat[indF,0] = 1
+        else: fmat[indF,0] = 0
         firstVal = np.where(cfg_eBOSC['F']>=highFreq[indF])[0]
-        if not not any(firstVal):
+        if len(firstVal)>0:
             # last freq falling into range
             fmat[indF,2] = firstVal[0]-1
-        else: fmat[indF,2] = cfg_eBOSC['F'].shape[0]
-    fmat[:,1] = np.arange(1, cfg_eBOSC['F'].shape[0]+1,1)
+        else: fmat[indF,2] = cfg_eBOSC['F'].shape[0]-1
+    fmat[:,1] = np.arange(0, cfg_eBOSC['F'].shape[0],1)
     del indF
     range_cur = np.diff(fmat, axis=1)
-    range_cur = np.max(range_cur,axis=0)
+    range_cur = [int(np.max(range_cur[:,0])), int(np.max(range_cur[:,1]))]
     # %% perform the actual search
     # initialize variables
     # append frequency search space (i.e. range at both ends. first index refers to lower range
@@ -373,7 +374,7 @@ def eBOSC_episode_postproc_maxbias(cfg_eBOSC, episodes, TFR):
         [tmp_bias_mat, tmp_time, tmp_freq] = BOSC_tf(signal,cfg_eBOSC['F'],cfg_eBOSC['fsample'],cfg_eBOSC['wavenumber'])
         # bias matrix
         points_begin = np.arange(0,N_tp+1)
-        points_end = np.arange(N_tp,B_bias.shape[2])
+        points_end = np.arange(N_tp,B_bias.shape[2]+1)
         # for some reason, we have to transpose the matrix here, as the submatrix dimension order changes???
         B_bias[f,:,points_begin] = np.transpose(tmp_bias_mat[:,points_begin])
         B_bias[f,:,points_end] = np.transpose(np.fliplr(tmp_bias_mat[:,points_begin]))
@@ -582,7 +583,7 @@ def eBOSC_episode_create(cfg_eBOSC,TFR,detected,eBOSC):
     # formula and apply half of the BP repsonse on top of the center frequency.
     # Because of log-scaling, the widths are not the same on both sides.
     
-    detected = eBOSC_episode_sparsefreq(cfg_eBOSC, detected, TFR)
+    detected = eBOSC_episode_sparsefreq(cfg_eBOSC, detected, TFR)    
     
     # %%  Create continuous rhythmic episodes
     
@@ -608,7 +609,6 @@ def eBOSC_episode_create(cfg_eBOSC,TFR,detected,eBOSC):
         # find seed (remember that numpy uses row-first format!)
         # we need increasing x-axis sorting here
         [tmp_y,tmp_x] = np.where(np.matrix.transpose(detected_remaining)==1)
-        #[tmp_x,tmp_y] = np.where(detected_remaining==1)
         x.append(tmp_x[0])
         y.append(tmp_y[0])
         # check next sampling point
@@ -619,7 +619,7 @@ def eBOSC_episode_create(cfg_eBOSC,TFR,detected,eBOSC):
             next_freqs = np.arange(x[-1]-cfg_eBOSC['fstp'],
                           x[-1]+cfg_eBOSC['fstp']+1)
             tmp = np.where(detected_remaining[next_freqs,next_point]==1)[0]
-            if not tmp.size == 0:
+            if tmp.size > 0:
                 y.append(next_point)
                 if tmp.size > 1:
                     # JQK 161017: It is possible that an episode is branching 
@@ -627,7 +627,7 @@ def eBOSC_episode_create(cfg_eBOSC,TFR,detected,eBOSC):
                     # Note that there is no correction for 1/f here, but 
                     # practically, it leads to satisfying results 
                     # (i.e. following the longer episodes).
-                    tmp_data = tmp_B1[np.arange(x[-1]-cfg_eBOSC['fstp'],x[-1]+cfg_eBOSC['fstp']),next_point]
+                    tmp_data = tmp_B1[next_freqs,next_point]
                     tmp = np.where(tmp_data == max(tmp_data))[0]
                 x.append(next_freqs[tmp[0]])
             else:
@@ -643,8 +643,7 @@ def eBOSC_episode_create(cfg_eBOSC,TFR,detected,eBOSC):
         if len(y) >= num_pnt:
             # %% encode episode that crosses duration threshold
             episodesTable['RowID'].append(np.array(x)-cfg_eBOSC['fstp'])
-            episodesTable['ColID'].append([np.single(y[0]-cfg_eBOSC['fstp']), 
-                                    np.single(y[-1]-cfg_eBOSC['fstp'])])
+            episodesTable['ColID'].append([np.single(y[0]), np.single(y[-1])])
             episodesTable['Frequency'].append(np.single(cfg_eBOSC['F'][episodesTable['RowID'][-1]]))
             episodesTable['FrequencyMean'].append(np.single(avg_frq))
             tmp_x = episodesTable['RowID'][-1]

@@ -21,7 +21,7 @@ pn['outfile'] = os.path.join(pn['root'],'data','example_out.npy')
 # %% eBOSC parameters
 
 cfg_eBOSC = dict()
-cfg_eBOSC['F'] = 2 ** np.arange(1,6,.125)   # frequency sampling
+cfg_eBOSC['F'] = 2 ** np.arange(1,6+.125,.125)   # frequency sampling
 cfg_eBOSC['wavenumber'] = 6                 # wavelet parameter (time-frequency tradeoff)
 cfg_eBOSC['fsample'] = 500                  # current sampling frequency of EEG data
 cfg_eBOSC['pad.tfr_s'] = 1                  # padding following wavelet transform to avoid edge artifacts in seconds (bi-lateral)
@@ -160,11 +160,11 @@ alphaDetected[alphaDetected==0] = np.nan
 for indEp in idx_alpha[0]:
     # These are two alternative ways to extract the onset timepoint from the table
     idx_onsetTime.append(np.where(cfg_eBOSC['time.time_det']>= eBOSC['episodes']['Onset'][indEp])[0][0])
-    idx_onset.append(eBOSC['episodes']['ColID'][indEp][0])
+    idx_onset.append(np.int_(eBOSC['episodes']['ColID'][indEp][0]))
     # Mark all periods with episodes falling into the alpha range
     within_range = np.arange(eBOSC['episodes']['ColID'][indEp][0], 
                              eBOSC['episodes']['ColID'][indEp][-1]+1)
-    alphaDetected[within_range] = 1
+    alphaDetected[np.int_(within_range)] = 1
 
 fig, ax = plt.subplots(nrows=1, ncols=1,figsize=(10,5))
 highlight_limit = max(origData)*2
@@ -180,7 +180,7 @@ rhythm.set_label('Rhythmic signal')
 plt.xlabel('Time (s)')
 plt.ylabel('Power [µV]')
 ax.legend()
-ax.set_xlim([4, 12])
+ax.set_xlim([162, 167])
 plt.show()
 
 # =============================================================================

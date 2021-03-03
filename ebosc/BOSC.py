@@ -36,12 +36,12 @@ def BOSC_tf(eegsignal,F,Fsample,wavenumber):
     # loop through sampled frequencies
     for f in range(len(F)):
         #print(f)
-        t=np.arange(-3.6*st[f],(3.6*st[f])+1/Fsample,1/Fsample)
+        t=np.arange(-3.6*st[f],(3.6*st[f]),1/Fsample)
         # define Morlet wavelet
         m=A[f]*np.exp(-t**2/(2*st[f]**2))*np.exp(1j*2*np.pi*F[f]*t)
         y=np.convolve(eegsignal,m, 'full')
         y=abs(y)**2
-        B[f,:]=y[np.arange(int(np.ceil(len(m)/2)), len(y)-int(np.floor(len(m)/2)) + 1, 1)]
+        B[f,:]=y[np.arange(int(np.ceil(len(m)/2))-1, len(y)-int(np.floor(len(m)/2)), 1)]
         T=np.arange(1,len(eegsignal)+1,1)/Fsample
     return B, T, F
 
@@ -96,12 +96,12 @@ def BOSC_detect(b,powthresh,durthresh,Fsample):
     if not any(pos) and not any(neg):
         # either all time points are rhythmic or none
         if all(x==1):
-            H = np.array([[1],[nT]])
+            H = np.array([[0],[nT]])
         elif all(x==0):
             H = np.array([])
     elif not any(pos):
         # i.e., starts on an episode, then stops
-        H = np.array([[1],neg])
+        H = np.array([[0],neg])
         #np.concatenate(([1],neg), axis=0)
     elif not any(neg):
         # starts, then ends on an ep.
@@ -111,7 +111,7 @@ def BOSC_detect(b,powthresh,durthresh,Fsample):
         # special-case, create the H double-vector
         if pos[0]>neg[0]:
             # we start with an episode
-            pos = np.append(1,pos)
+            pos = np.append(0,pos)
         if neg[-1]<pos[-1]:
             # we end with an episode
             neg = np.append(neg,nT)
