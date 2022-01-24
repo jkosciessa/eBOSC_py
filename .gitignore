@@ -29,3 +29,6 @@
 .DS_Store
 # ignore any files ending with _
 ._*
+# ignore python distribution files
+build/
+dist/
