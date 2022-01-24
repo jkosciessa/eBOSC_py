@@ -22,13 +22,19 @@ A MATLAB implementation can be found [here](https://github.com/jkosciessa/eBOSC)
 -------------
 
 Get the latest development version using git:
-git clone https://github.com/jkosciessa/eBOSC_py
+`git clone https://github.com/jkosciessa/eBOSC_py`
 
 To install this cloned copy, move into the cloned directory and run:
-pip install .
+`pip install .`
 
-You can also install an editable development version by installing with:
-pip install -e .
+The example files in the `/data` directory are stored in [Git Large File Storage](https://git-lfs.github.com/). To retrieve them install the lfs (`git lfs install`), and then get the files with `git lfs pull`.
+
+To get started, see the example provided in `examples/eBOSC_example_empirical.ipynb`. Data is based off a FieldTrip structure and conversion scripts to MNE-style format are provided in the `examples` directory.
+
+## Problems?
+-------------
+
+If you want to use the tool but encounter issues, or would like to suggest a new feature, feel free to open an [issue](https://github.com/jkosciessa/eBOSC_py/issues).
 
 ## Credits
 -------------
