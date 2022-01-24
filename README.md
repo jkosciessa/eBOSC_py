@@ -35,7 +35,7 @@ The example files in the `/data` directory are stored in [Git Large File Storage
 
 To get started, see the example provided in `examples/eBOSC_example_empirical.ipynb`. Data is based off a FieldTrip structure and conversion scripts to MNE-style format are provided in the `examples` directory.
 
-Releases are also available from [pypi.org](https://pypi.org/manage/project/ebosc/releases/) and can be installed via `pip install ebosc`.
+Releases are also available from [pypi.org](https://pypi.org/project/ebosc/) and can be installed via `pip install ebosc`.
 
 ## Problems?
 -------------
