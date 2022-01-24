@@ -7,7 +7,7 @@
 ## Overview
 --------
 
-**eBOSC** (extended Better OSCillation detection) is a toolbox (or a set of scripts) that can be used to detect the occurrence of rhythms in continuous signals (i.e., at the single trial level). It uses a static aperiodic ‘background’ spectrum as the basis to define a ‘power threshold’ that continuous signals have to exceed in order to qualify as ‘rhythmic’. As such, it leverages the observation that stochastic components of the frequency spectrum of neural data are aharacterized by a '1/f'-like power spectrum. An additional ‘duration threshold’ can be set up in advance, or rhythmic episodes can be filtered by duration following detection to ensure that detected rhythmic episodes have a rather sustained vs. transient appearance.
+**eBOSC_py** (extended Better OSCillation detection) is a toolbox that can be used to detect the occurrence of neural rhythms in continuous time series at the single trial level. It uses a static aperiodic ‘background’ spectrum as the basis to define a ‘power threshold’ that continuous signals have to exceed in order to qualify as ‘rhythmic’. As such, it leverages the observation that stochastic components of the frequency spectrum of neural data are aharacterized by a '1/f'-like power spectrum. An additional ‘duration threshold’ can be set up in advance, or rhythmic episodes can be filtered by duration following detection to ensure that detected rhythmic episodes have a rather sustained vs. transient appearance.
 
 ## Documentation
 -------------
@@ -34,6 +34,8 @@ To install this cloned copy, move into the cloned directory and run:
 The example files in the `/data` directory are stored in [Git Large File Storage](https://git-lfs.github.com/). To retrieve them install the lfs (`git lfs install`), and then get the files with `git lfs pull`.
 
 To get started, see the example provided in `examples/eBOSC_example_empirical.ipynb`. Data is based off a FieldTrip structure and conversion scripts to MNE-style format are provided in the `examples` directory.
+
+Releases are also available from [pypi.org](https://pypi.org/manage/project/ebosc/releases/) and can be installed via `pip install ebosc`.
 
 ## Problems?
 -------------
