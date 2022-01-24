@@ -2,6 +2,8 @@
 
 [![DOI](https://zenodo.org/badge/342610969.svg)](https://zenodo.org/badge/latestdoi/342610969)
 
+![Rhythm](https://github.com/jkosciessa/eBOSC/wiki/images/RhythmDetectionLogo.jpeg)
+
 ## Overview
 --------
 
