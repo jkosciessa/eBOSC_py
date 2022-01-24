@@ -5,7 +5,7 @@ classifiers = [
     # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
     'Development Status :: 4 - Beta',
     'Intended Audience :: Science/Research',
-    'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)'
+    'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)',
     'Operating System :: Unix',
     'Operating System :: POSIX',
     'Operating System :: Microsoft :: Windows',
@@ -20,7 +20,7 @@ with open(os.path.join('ebosc', 'version.py')) as version_file:
 
 setup(
     name='ebosc',
-    version=__version__,
+    version='0.95-dev',
     license='LGPL-3.0-or-later',
     description='extended Better Oscillation Detection, implemented in python3',
     maintainer = 'Julian Kosciessa',
