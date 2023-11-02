@@ -110,7 +110,7 @@ regex @ file:///Users/runner/miniforge3/conda-bld/regex_1610147050595/work
 requests @ file:///home/conda/feedstock_root/build_artifacts/requests_1608156231189/work
 rope @ file:///home/conda/feedstock_root/build_artifacts/rope_1602094471915/work
 Rtree @ file:///Users/runner/miniforge3/conda-bld/rtree_1610147290075/work
-scipy==1.4.1
+scipy==1.10.0
 six @ file:///opt/concourse/worker/volumes/live/5b31cb27-1e37-4ca5-6e9f-86246eb206d2/volume/six_1605205320872/work
 snowballstemmer @ file:///home/conda/feedstock_root/build_artifacts/snowballstemmer_1611270869511/work
 sortedcontainers @ file:///home/conda/feedstock_root/build_artifacts/sortedcontainers_1605110889605/work
