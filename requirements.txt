@@ -14,7 +14,7 @@ backports.functools-lru-cache==1.6.1
 black @ file:///home/conda/feedstock_root/build_artifacts/black-recipe_1599478779128/work
 bleach @ file:///home/conda/feedstock_root/build_artifacts/bleach_1612213472466/work
 brotlipy==0.7.0
-certifi==2020.12.5
+certifi==2023.7.22
 cffi @ file:///Users/runner/miniforge3/conda-bld/cffi_1613414067184/work
 chardet @ file:///Users/runner/miniforge3/conda-bld/chardet_1610093477312/work
 click==7.1.2
