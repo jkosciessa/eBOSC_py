@@ -79,7 +79,7 @@ def BOSC_detect(b,powthresh,durthresh,Fsample):
     # Step 1: power threshold
     x=b>powthresh
     # we have to turn the boolean to numeric
-    x = np.array(list(map(np.int, x)))
+    x = np.array(list(map(int, x)))
     # show the +1 and -1 edges
     dx=np.diff(x)
     if np.size(np.where(dx==1))!=0:
@@ -132,5 +132,5 @@ def BOSC_detect(b,powthresh,durthresh,Fsample):
                 detected[np.arange(H[0][h], H[1][h],1)]=1
         
     # ensure that outputs are integer
-    detected = np.array(list(map(np.int, detected)))
+    detected = np.array(list(map(int, detected)))
     return detected
